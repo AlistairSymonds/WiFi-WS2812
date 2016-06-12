@@ -34,6 +34,21 @@ void setup() {
   }
 }
 
+
+
+//modifier -1: timing [int timing]
+//modifier -2: hsv colour select [int hue, int saturation, int value] (All from 0 - 255)
+
+//pid 0: rotating rainbow [int initialHue]
+//pid 1: set uniform 
+//pid 2:
+//pid 3:
+//pid 4: set heat [int temp]
+//pid 5: 
+//pid 6: lone runner
+//pid 7: Audio modulated (WIP, crashes on AVR)
+//pid 8: static rainbow (dimmable)
+//pid 9: desaturate hsv rainbow used for {pid 8} 
 void serialEvent(){
   Serial.println("serial event was called");
   int input = Serial.parseInt();
@@ -63,6 +78,7 @@ void serialEvent(){
     } else if (pid == 4) {
       temp = Serial.parseInt();
       heat(temp);
+      
     } else if (pid == 5) {
       fadeall();
 
@@ -121,10 +137,11 @@ void loop() {
       delay(timing);
       
     } else if (pid == 1) {
-
+      //nothing to loop for uniform set
       
     } else if (pid == 4) {
- 
+      //nothing to loop for heat
+      
     } else if (pid == 6) {
       leds[p] = CHSV(h,s,v);
       p++;
