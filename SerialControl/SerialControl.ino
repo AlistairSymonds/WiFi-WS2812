@@ -4,31 +4,38 @@
 CRGB leds[NUM_LEDS];
 CHSV ledsHSV[NUM_LEDS];
 
+int LM35Pin = A0;
+
 int inByte = 0;
 int program = 0;
 int i = 0;
 int modifier = 0;
 int pid = 4;
-boolean loopingpid = false;
+int rainbowSolidHue = 0;
 int iHue = 0;
 int timing = 5;
 int temp = 150;
 int spectrumValue[7];
 
+
 int h = 0;
 int s = 0;
 int v = 0;
+
+int deltaH = 0;
+int deltaS = 0;
+int deltaV = 0;
 
 int p = 0;
 const int analogOutPin = 9;
 
 void setup() {
-  delay(1500);
-  Serial.begin(9600);
+  delay(500);
+  Serial.begin(115200);
 
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   for(int x = 0; x < NUM_LEDS; x++){
-          leds[x] = CHSV(200,230,230);
+          leds[x] = CHSV(130,160,100);
           FastLED.show();
           delay(5);
   }
@@ -38,17 +45,24 @@ void setup() {
 
 //modifier -1: timing [int timing]
 //modifier -2: hsv colour select [int hue, int saturation, int value] (All from 0 - 255)
+//modifier -3: get temp
+//modifier -4: cycle hue [int] {"-4 0" disables cycle}
+//modifier -5: cycle saturation [int] {"-5 0" disables cycle}
+//modifier -6: cycle value [int] {"-6 0" disables cycle}
 
 //pid 0: rotating rainbow [int initialHue]
 //pid 1: set uniform 
-//pid 2:
-//pid 3:
+//pid 2: confetti
+//pid 3: 
 //pid 4: set heat [int temp]
-//pid 5: 
+//pid 5: fade all
 //pid 6: lone runner
 //pid 7: Audio modulated (WIP, crashes on AVR)
 //pid 8: static rainbow (dimmable)
-//pid 9: desaturate hsv rainbow used for {pid 8} 
+//pid 9: desaturate hsv rainbow used for {pid 8}
+//pid 10: theatre ticker
+
+
 void serialEvent(){
   Serial.println("serial event was called");
   int input = Serial.parseInt();
@@ -64,7 +78,16 @@ void serialEvent(){
       h = Serial.parseInt();
       s = Serial.parseInt();
       v = Serial.parseInt();    
-    } 
+    } else if (modifier == -3) {
+      double extTemp = getTemp();
+      Serial.println(extTemp);
+    } else if (modifier == -4) {
+      deltaH = Serial.parseInt();
+    }  else if (modifier == -5) {
+      deltaS = Serial.parseInt();
+    }  else if (modifier == -6) {
+      deltaV = Serial.parseInt();
+    }
     
   } else {
     pid = input;
@@ -74,6 +97,13 @@ void serialEvent(){
      
     } else if (pid == 1) {
       setUniform(h, s, v);
+      FastLED.show();
+
+    } else if (pid == 2) {
+
+    } else if (pid == 3) {
+      s = 255;
+      v = 255;
       
     } else if (pid == 4) {
       temp = Serial.parseInt();
@@ -123,12 +153,11 @@ void serialEvent(){
 
   
   Serial.println(pid);
-  delay(5);
+  delay(1);
 }
 
 
 void loop() {
-  //while(Serial.available() > 0) {
 
     
     if (pid == 0) {
@@ -137,7 +166,19 @@ void loop() {
       delay(timing);
       
     } else if (pid == 1) {
-      //nothing to loop for uniform set
+      setUniform(h, s, v);
+      FastLED.show();
+      delay(timing);
+
+    } else if (pid == 2) {
+      confetti();
+      delay(timing);
+      
+    } else if (pid == 3) {
+      fill_solid(leds, NUM_LEDS, CHSV(rainbowSolidHue,s,v));
+      rainbowSolidHue++;
+      FastLED.show();
+      delay(timing);
       
     } else if (pid == 4) {
       //nothing to loop for heat
@@ -151,24 +192,70 @@ void loop() {
       if (p == NUM_LEDS){
         p = 0;
       }
+      
     } else if (pid == 7) {
-      int amplitude = analogRead(A0);
+      int amplitude = 512; //analogRead(A0)
       Serial.println(amplitude);
       
       audioMod();
       FastLED.show();
+      
+    } else if (pid == 10) {
+
+      int pixelDistance = 6;
+      for (int i = 0; i < NUM_LEDS; i++){
+        if (i % pixelDistance == 0 + p) {
+          leds[i] = CHSV(h,s,v);
+        }
+      }
+
+      p++;
+      FastLED.show();
+      int fadeFactor = v/64;
+      for (int i = 0; i < fadeFactor; i++){
+        fadeall();        
+      }
+      
+      delay(timing);
+      if (p == pixelDistance){
+        p = 0;
+      }
     }
-    
 
+  //Modifiers
+  h = h + deltaH;
+  s = s + deltaS;
+  v = v + deltaV;
 
-       
+  //looping the modifiers
+  if (h == 0 || h == 255 && deltaH != 0){
+    if(deltaH > 0 && h == 255){
+      h = 0;
+    } else if (deltaH < 0 && h == 0){
+      h = 255;
+    }
+  }
+
+  if (s == 0 || s == 255 && deltaS != 0){
+    if(deltaS > 0 && s == 255){
+      deltaS = deltaS * -1;
+    } else if (deltaS < 0 && s == 0){
+      deltaS = deltaS * -1;
+    }
+  }
+
+  if (v == 0 || v == 255 && deltaV != 0){
+    if(deltaV > 0 && v == 255){
+      deltaV = deltaV * -1;
+    } else if (deltaV < 0 && v == 0){
+      deltaV = deltaV * -1;
+    }
+  }       
 }
 
 void setUniform(int h, int s, int v){
   for(int x = 0; x < NUM_LEDS; x++){
         leds[x] = CHSV(h,s,v);
-        FastLED.show();
-        delay(timing);
   }
 }
 
@@ -226,16 +313,15 @@ void audioMod() {
   
   for(int i = 0; i < 7; i++){
     spectrumValue[i]=map(spectrumValue[i], 0,1023,0,255);
-    Serial.print("Spectrum values mapped!");
-    //for(int j = 0; j < NUM_LEDS; j++){
-      //Serial.print("  currently on led ");
-      //Serial.print(j);
-      //int homeled = i * 32;
-      //for(int k = homeled; k < homeled + 128; k++) {
-        ledsHSV[25].s = ledsHSV[25].s * spectrumValue[25];
-      //}
+    for(int j = 0; j < NUM_LEDS; j++){
+      Serial.print("  currently on led ");
+      Serial.print(j);
+      int homeled = i * 32;
+      for(int k = homeled; k < homeled + 128; k++) {
+        ledsHSV[k].s = ledsHSV[k].s * spectrumValue[i];
+      }
       
-    //}
+    }
   }
   for (int i = 0; i < NUM_LEDS; i++) {
        leds[i] = CHSV(ledsHSV[i].h, ledsHSV[i].s, ledsHSV[i].v);
@@ -243,9 +329,31 @@ void audioMod() {
   FastLED.show();
 }
 
-        
- 
+double getTemp() {
+  int rawData = analogRead(LM35Pin);
+  Serial.println(rawData);
+  //each value of the ADC (when using 5V) is 0.004982V (or 4.882 mV)
+  double extTemp = rawData*0.004882;
+  extTemp = extTemp*100;
+  return extTemp;
+}
 
+void confetti() 
+{
+  // random colored speckles that blink in and fade smoothly
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int pos = random16(NUM_LEDS);
+  leds[pos] += CHSV( iHue + random8(64), 200, 255);
+}
+
+void theatreTicker() {
+  int movingPixels = 4;
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i] = CHSV(h,s,v);
+    fadeall();
+  }
+  
+}
 
 
 
