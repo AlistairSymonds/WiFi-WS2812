@@ -1,0 +1,13 @@
+public class scanResult{
+	int[] IPV4 = new int[4];
+	int port;
+	boolean isOpen;
+	String ip;
+	
+	public scanResult(String ip, int port, boolean isOpen){
+		this.ip = ip;
+		this.port = port;
+		this.isOpen = isOpen;
+	
+	}
+}

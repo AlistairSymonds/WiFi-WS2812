@@ -1,0 +1,12 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class networkScannerWorker implements Runnable{
+	public networkScannerWorker()
+	@Override
+	public static void run(){
+		
+	}
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;allScanned&apos; in &apos;networkScanner.scan(...)&apos; to &apos;allDone&apos;&#x0D;&#x0A;- Original project: &apos;WiFi-Home-Java&apos;&#x0D;&#x0A;- Original element: &apos;networkScanner.scan(int).allScanned&apos;&#x0D;&#x0A;- Renamed element: &apos;allScanned&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;allScanned&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/&lt;{networkScanner.java[networkScanner~scan~I@allScanned!836!862!844!853!Z!0!false" name="allDone" references="true" stamp="1467023503000" version="1.0"/>
+</session>
