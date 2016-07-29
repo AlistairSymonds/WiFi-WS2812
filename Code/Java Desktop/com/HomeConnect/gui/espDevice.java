@@ -13,7 +13,6 @@ public class espDevice implements Runnable{
     private DataInputStream in;
     private Socket ElSocketo;
     private boolean validDevice = true;
-    private String humanName;
     
     private volatile boolean running = false;
     private ConcurrentLinkedQueue<String> queue;
@@ -26,25 +25,12 @@ public class espDevice implements Runnable{
     	this.ElSocketo = null;
     	this.queue = new ConcurrentLinkedQueue<String>();
     	this.funcs = new ArrayList<Byte>();
-    	this.humanName = "Name not set";
     }
     
-    
-    
-    public boolean handShake() throws IOException, Exception  {
+    public boolean handShake() throws IOException  {
     	System.out.println("Beginning handshake with device at " + host);
     	out.writeByte(17);
-    	System.out.println("Sleeping to wait for response");
-    	Thread.sleep(500);
-    	System.out.println("Woken up");
-    	int shake = 0;
-    	if(in.available() > 0){
-    		shake = in.readByte();
-    	} else {
-    		System.out.println("invalid or no handshake recieved back: " + shake);
-    		return false;
-    	}
-    	
+    	int shake = in.readByte();
     	System.out.println("recieved back: " + shake);
     	if (shake == 12){
     		for(int i = 0; i < 4; i++){
@@ -78,7 +64,7 @@ public class espDevice implements Runnable{
         }
         try {
 			this.validDevice = handShake();
-		} catch (Exception e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Couldn't get IO info with device at: "+host+ " on port: "+port);
 			//System.out.println("Device at: "+host+ " on port: "+port+" is invalid, terminating thread");
@@ -89,23 +75,13 @@ public class espDevice implements Runnable{
     
 
     
-    public byte[] readMessage() throws IOException, Exception{
-    	Thread.sleep(50);
+    public byte[] readMessage() throws IOException{
     	int len = in.readByte();
-    	System.out.println("recieved " + len + " for the emssage length");
-    	Thread.sleep(len*70);
-    	if(in.available() > len){
-        	byte bytesIn[] = new byte[len];
-        	for (int i = 0; i < len; i++){
-        		bytesIn[i] = in.readByte();
-        		System.out.println("byte " + i + " is " + bytesIn[i]);
-        	}
-        	return bytesIn;
-    	} else {
-    		byte noByte[] = {0};
-    		return noByte;
+    	byte bytesIn[] = new byte[len];
+    	for (int i = 0; i < len; i++){
+    		bytesIn[i] = in.readByte();
     	}
-    	
+    	return bytesIn;
     }
     
     public void writeOut(String input){
@@ -160,7 +136,6 @@ public class espDevice implements Runnable{
 		}
     	running = false;
     }
-    
     public boolean isRunning(){
     	return running;
     }
@@ -183,10 +158,4 @@ public class espDevice implements Runnable{
     public byte[] getDeviceID(){
     	return this.deviceID;
     }
-    
-    public String getHumanName(){
-    	return this.humanName;
-    }
-    
-    
 }

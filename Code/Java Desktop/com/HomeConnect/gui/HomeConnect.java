@@ -3,34 +3,32 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import org.eclipse.swt.widgets.Display;
-
 public class HomeConnect {
 	static ArrayList<espDevice> deviceList = new ArrayList<espDevice>();
 	ArrayList<scanResult> results = null;
-	static MainWindow window;
+	static mainWindow window = new mainWindow();
 	
-    public static void main(String[] args) throws IOException, Exception {
-    	
-    	window = new MainWindow();
-    	Thread t = new Thread(window);
-    	
-    	
-    	
-    	t.start();
-    	Thread.sleep(10);
-    	
-    	scan();
+    public static void main(String[] args) throws IOException {
+    	mainWindow.createWindow();
     	BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-    	Display d = window.getDisplay();
-    	
-    	for(int i = 0; i<100; i++)
-        {           
-            //System.out.println(i + "  " + d);
-            window.update(i);  
-            Thread.sleep(500);
+        if(args.length == 1){
+        	espDevice dev = new espDevice(args[0], 2812);
+        	dev.start();
+        	if (dev.isValid()){
+        		deviceList.add(dev);
+        		System.out.println("device was valid");
+        	} else {
+        		dev.terminate();
+        	}
+        } else {
+        	System.out.println("host address pls");
+        	System.out.println("jk we're doing it live");
+        	//ArrayList<scanResult> results = scan();
+        	scan();
+        	        	
         }
-    	
+        
+        //main loop waiting for input
         String userInput;
         while ((userInput = stdIn.readLine()) != null) {
         	takeInput(userInput);
@@ -38,7 +36,6 @@ public class HomeConnect {
 
 
     }
-    
     public static void handleStringCmd(String cmd){
         if (cmd.equals("exit")){
             System.out.println("exiting program");
@@ -108,17 +105,7 @@ public class HomeConnect {
     }
     
     public static ArrayList<scanResult> scan(){
-    	for(int i = 0; i < deviceList.size(); i++){
-    		deviceList.get(i).terminate();
-    		System.out.println(deviceList.get(i).isRunning());
-    	}
-//    	for(int i = 0; i < deviceList.size(); i++){
-//    		if(!deviceList.get(i).isRunning()){
-//    			deviceList.get(i).stop();
-//    		}
-//    	}
     	
-    	deviceList.clear();
     	ArrayList<scanResult> results = new ArrayList<scanResult>();
     	try {
 			results = networkScanner.scan(2812);
@@ -137,18 +124,12 @@ public class HomeConnect {
     				deviceList.add(dev);
     				System.out.println("device added");
     				
-    				
     			} else{
     				dev.terminate();
     			}
     		}
     	}
-    	//devicesList has been created, do gui stuff 
-    	window.addList(deviceList);
-    	
     	return results;
-    	
     }
-    
     
 }
