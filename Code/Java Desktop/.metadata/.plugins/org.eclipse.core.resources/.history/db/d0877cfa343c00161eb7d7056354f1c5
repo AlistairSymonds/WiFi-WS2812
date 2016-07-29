@@ -1,7 +1,0 @@
-public class networkScannerWorker implements Runnable{
-	public networkScannerWorker()
-	@Override
-	public static void run(){
-		
-	}
-}
