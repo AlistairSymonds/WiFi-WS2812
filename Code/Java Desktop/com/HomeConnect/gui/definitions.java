@@ -5,7 +5,11 @@ public class definitions{
 			return "Lighting";
 		} else if (id == 2){
 			return "Environment Sensors";
-		} else {
+		} else if (id == 3){
+			return "GPIO 2";
+		} else if(id == 6){
+			return "Debug serial access";
+		}else {
 			return "Unknown function!";
 		}
 	}

@@ -38,7 +38,7 @@ public class networkScanner{
 		      @Override public scanResult call() {
 		        try {
 		          Socket socket = new Socket();
-		          System.out.println("about to connect to " + ip + " on port " + port);
+		          //System.out.println("about to connect to " + ip + " on port " + port);
 		          socket.connect(new InetSocketAddress(ip, port), timeout);
 		          socket.close();
 		          return new scanResult(ip, port, true);

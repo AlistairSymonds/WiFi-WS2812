@@ -3,32 +3,34 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import org.eclipse.swt.widgets.Display;
+
 public class HomeConnect {
 	static ArrayList<espDevice> deviceList = new ArrayList<espDevice>();
 	ArrayList<scanResult> results = null;
-	static mainWindow window = new mainWindow();
+	static MainWindow window;
 	
-    public static void main(String[] args) throws IOException {
-    	mainWindow.createWindow();
+    public static void main(String[] args) throws IOException, Exception {
+    	
+    	window = new MainWindow();
+    	Thread t = new Thread(window);
+    	
+    	
+    	
+    	t.start();
+    	Thread.sleep(10);
+    	
+    	scan();
     	BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-        if(args.length == 1){
-        	espDevice dev = new espDevice(args[0], 2812);
-        	dev.start();
-        	if (dev.isValid()){
-        		deviceList.add(dev);
-        		System.out.println("device was valid");
-        	} else {
-        		dev.terminate();
-        	}
-        } else {
-        	System.out.println("host address pls");
-        	System.out.println("jk we're doing it live");
-        	//ArrayList<scanResult> results = scan();
-        	scan();
-        	        	
+    	Display d = window.getDisplay();
+    	
+    	for(int i = 0; i<100; i++)
+        {           
+            //System.out.println(i + "  " + d);
+            //window.update(i);  
+            Thread.sleep(500);
         }
-        
-        //main loop waiting for input
+    	
         String userInput;
         while ((userInput = stdIn.readLine()) != null) {
         	takeInput(userInput);
@@ -36,6 +38,7 @@ public class HomeConnect {
 
 
     }
+    
     public static void handleStringCmd(String cmd){
         if (cmd.equals("exit")){
             System.out.println("exiting program");
@@ -52,6 +55,7 @@ public class HomeConnect {
         		for(int j = 0; j < deviceList.get(i).getFuncs().size(); j++){
         			System.out.print(Integer.toBinaryString(deviceList.get(i).getFuncs().get(j)) + " ");
         		}
+        		
         		System.out.println();
         		byte tempID[] = deviceList.get(i).getDeviceID();
         		System.out.print("Device ID bytes are: ");
@@ -105,7 +109,19 @@ public class HomeConnect {
     }
     
     public static ArrayList<scanResult> scan(){
+    	for(int i = 0; i < deviceList.size(); i++){
+    		deviceList.get(i).sendMessage("9");
+    		try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		deviceList.get(i).terminate();
+    		System.out.println(deviceList.get(i).isRunning());
+    	}
     	
+    	deviceList.clear();
     	ArrayList<scanResult> results = new ArrayList<scanResult>();
     	try {
 			results = networkScanner.scan(2812);
@@ -124,12 +140,18 @@ public class HomeConnect {
     				deviceList.add(dev);
     				System.out.println("device added");
     				
+    				
     			} else{
     				dev.terminate();
     			}
     		}
     	}
+    	//devicesList has been created, do gui stuff 
+    	window.addList(deviceList);
+    	
     	return results;
+    	
     }
+    
     
 }
