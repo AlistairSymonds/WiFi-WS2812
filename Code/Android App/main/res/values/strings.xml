@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Home Connect</string>
+    <string name="action_settings">Settings</string>
+    <string name="edit_message">edit msg</string>
+    <string name="button_send">button text</string>
+    <string name="title_activity_scan_dialog">scan_dialog</string>
+    <string name="scanning">Scanning</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_est">est</string>
+
+    <string-array name="cat_names">
+        <item>George</item>
+        <item>Zubin</item>
+        <item>Carlos</item>
+        <item>Frank</item>
+        <item>Charles</item>
+        <item>Simon</item>
+        <item>Fezra</item>
+        <item>Henry</item>
+        <item>Schuster</item>
+    </string-array>
+    <string name="title_activity_esp_device_top_level">espDevice_top_level</string>
+    <string name="title_activity_generic_dev_command_view">GenericDevCommandView</string>
+</resources>

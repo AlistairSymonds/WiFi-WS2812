@@ -13,12 +13,15 @@ int inByte = 0;
 int program = 0;
 int i = 0;
 int modifier = 0;
-int pid = 6;
+int pid = 1;
 int rainbowSolidHue = 0;
 int iHue = 0;
 long timing = 20;
 int temp = 150;
 int spectrumValue[7];
+
+float amplitudes[15];
+float oldAmps[15];
 
 
 
@@ -26,15 +29,16 @@ int spectrumValue[7];
 
 AudioInputAnalog         adc1;           //xy=164,115
 AudioAnalyzeFFT1024      fft1024;      //xy=408,120
+AudioAnalyzePeak         peak;
 AudioConnection          patchCord1(adc1, fft1024);
-
+AudioConnection          patchCord2(adc1, peak);
 
 
 
 
 int h = 164;
-int s = 255;
-int v = 255;
+int s = 0;
+int v = 64;
 
 int deltaH = 0;
 int deltaS = 0;
@@ -61,6 +65,9 @@ void theatreTicker();
 void updateLEDS();
 void serialGiveInfo();
 void audioFFTUpdate();
+void audioFFTUpdateImproved();
+void linearVUMeter();
+void valueVUMeter();
 
 void setup() {
   delay(500);
@@ -86,6 +93,9 @@ void setup() {
 //modifier 83: cycle hue [int] {"-4 0" disables cycle}
 //modifier 84: cycle saturation [int] {"-5 0" disables cycle}
 //modifier 85: cycle value [int] {"-6 0" disables cycle}
+//modifier 86: set h
+//modifier 86: set s
+//modifier 87: set v
 
 //command 90: get info on serial
 
@@ -101,7 +111,9 @@ void setup() {
 //pid 9: desaturate hsv rainbow used for {pid 8}
 //pid 10: theatre ticker
 //pid 11: fft audio modulation
-
+//pid 12
+//pid 13: value vu meter
+//pid 14: linear vu meter
 
 void Serial1_Event(byte messageIn[], int messageInLength){
 
@@ -122,6 +134,12 @@ void Serial1_Event(byte messageIn[], int messageInLength){
       deltaS = messageIn[1];
     }  else if (modifier == 85) {
       deltaV = messageIn[1];
+    } else if(modifier == 86){
+      h = messageIn[1];
+    } else if(modifier == 87){
+      s = messageIn[1];
+    } else if(modifier == 88){
+      v = messageIn[1];
     } else if( modifier == 90){
       serialGiveInfo();
     }
@@ -233,7 +251,7 @@ void loop() {
     } else if (pid == 6) {
       leds[p] = CHSV(h,s,v);
       p++;
-      FastLED.show();
+      //FastLED.show();
       fadeall();
       delay(timing);
       if (p == NUM_LEDS){
@@ -271,6 +289,19 @@ void loop() {
       if(fft1024.available()){
         audioFFTUpdate();
       }
+    } else if (pid == 12){
+      if(fft1024.available()){
+        audioFFTUpdateImproved();
+      }
+    } else if(pid == 13){
+      if(peak.available()){
+        linearVUMeter();
+      }
+      
+      //delay(50);
+    } else if(pid == 14){
+      valueVUMeter();
+      //delay(50);
     }
 
   //Modifiers
@@ -411,20 +442,20 @@ void audioFFTUpdate(){
   /*
   float level[16];
 
-  level[0] =  fft1024.read(0);
-  level[1] =  fft1024.read(1);
-  level[2] =  fft1024.read(2, 3);
-  level[3] =  fft1024.read(4, 6);
-  level[4] =  fft1024.read(7, 10);
-  level[5] =  fft1024.read(11, 15);
-  level[6] =  fft1024.read(16, 22);
-  level[7] =  fft1024.read(23, 32);
-  level[8] =  fft1024.read(33, 46);
-  level[9] =  fft1024.read(47, 66);
-  level[10] = fft1024.read(67, 93);
-  level[11] = fft1024.read(94, 131);
-  level[12] = fft1024.read(132, 184);
-  level[13] = fft1024.read(185, 257);
+  level[0] =  fft1024.read(0); //1 bins
+  level[1] =  fft1024.read(1); //1
+  level[2] =  fft1024.read(2, 3); // 2
+  level[3] =  fft1024.read(4, 6);// 3
+  level[4] =  fft1024.read(7, 10); //4
+  level[5] =  fft1024.read(11, 15);//5
+  level[6] =  fft1024.read(16, 22);//7
+  level[7] =  fft1024.read(23, 32);// 10
+  level[8] =  fft1024.read(33, 46);//14
+  level[9] =  fft1024.read(47, 66);//19
+  level[10] = fft1024.read(67, 93);// 27
+  level[11] = fft1024.read(94, 131); //37
+  level[12] = fft1024.read(132, 184); //52
+  level[13] = fft1024.read(185, 257); // 73
   level[14] = fft1024.read(258, 359);
   level[15] = fft1024.read(360, 511);
 
@@ -467,6 +498,87 @@ void audioFFTUpdate(){
     
   }
 
+  FastLED.show();
+}
+
+void audioFFTUpdateImproved(){
+  int samplesPerBin[] = {
+    1, 1, 2, 3,
+    4, 5, 7, 10,
+    14, 19, 27, 37,
+    52, 72, 101};
+
+   
+   
+  //amplitudes[15];
+  //oldAmps[15];
+  for(int i = 0; i < 15; i++){
+    oldAmps[i] = amplitudes[i];
+  }
+  
+  int currentBin = 0;
+  
+  for(int i = 0; i < 15; i++){
+    float newAmp = 0;
+    for(int j = 0; j < samplesPerBin[i]; j++){
+      newAmp = newAmp + fft1024.read(currentBin);
+      currentBin++;
+    }
+    
+    newAmp = newAmp/samplesPerBin[i];
+    
+    if(newAmp < oldAmps[i]){
+      //amplitudes[i] = oldAmps[i] - 0.001; 
+    } else{
+      amplitudes[i] = newAmp;
+    }
+  }
+
+  for(int i = 0; i < 15; i++){
+    Serial.print(amplitudes[i]);
+    Serial.print(" ");
+    float floatMult = 255.0;
+    int val = floatMult * amplitudes[i];
+    if(val < 8){
+        val = 8;
+    } else {
+      val = val * val;
+    }
+    leds[i] = CHSV(h, s, val);
+  }
+
+  fadeall();
+  FastLED.show();
+  Serial.println();
+  
+}
+
+void valueVUMeter(){
+  
+  float level = peak.read();
+  level = level *10;
+  int val = level * level;
+  Serial.println(val);
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i] = CHSV(h, s, val);
+  }
+  FastLED.show();
+}
+
+void linearVUMeter(){
+  float peakVal = peak.read();
+  int vHeight = peakVal * NUM_LEDS;
+  Serial.println(peakVal);
+  /*
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i] = CHSV(0,0,0);
+  }
+  */
+  fadeall();
+  fadeall();
+  for(int i = 0; i < vHeight; i++){
+    leds[i] = CHSV(h,s,v);
+  }
   FastLED.show();
 }
 

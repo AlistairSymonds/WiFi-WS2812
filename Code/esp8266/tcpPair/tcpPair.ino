@@ -3,7 +3,7 @@
 #include <EEPROM.h>
 #include <stdint.h>
 
-byte funcs[] = {1, 3, 6, 7, 8, 9, 10};//1 for led lights over serial, 2 for local temps
+byte funcs[] = {1, 2};//1 for led lights over serial, 2 for local temps
 const char* ssid     = "symnet01";
 const char* password = "GreenM00n";
 
@@ -18,11 +18,12 @@ void readMessage();
 void writeMessage(byte[]);
 boolean handShake(WiFiClient);
 boolean handleMessage(byte[], int);
-boolean ledStatus = false;
+boolean ledStatus = true;
 
 void setup() {
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
 
@@ -34,7 +35,7 @@ void setup() {
     delay(1000);
   }
 
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED_BUILTIN, HIGH);
   server.begin();
 
 
@@ -134,6 +135,7 @@ boolean handleMessage(byte messageIn[], int messageInLength){ //returning true m
      
      //local cmds start
      if(messageIn[1] == 2){
+      digitalWrite(LED_BUILTIN, HIGH);
       //print back fake test info
       clients[c].write((byte)11); //length of message
       clients[c].write((byte)100); //testing hue
@@ -169,13 +171,17 @@ boolean handleMessage(byte messageIn[], int messageInLength){ //returning true m
         EEPROM.write(addr, messageIn[i]);
       }
     } else if (messageIn[1] == 8){
+       clients[c].write(4);
        clients[c].write(EEPROM.read(0));
        clients[c].write(EEPROM.read(1));
        clients[c].write(EEPROM.read(2));
+       //Serial.println(EEPROM.read(0));
     } else{
       //couldn't find
     }
     //local cmds finish
+    Serial.flush();
+    
   } else if (messageIn[0] == 9){//disonnect command!
     return true;
   }
