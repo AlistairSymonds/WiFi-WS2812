@@ -1,8 +1,9 @@
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
 #include <Audio.h>
-#define NUM_LEDS 30
+#define NUM_LEDS 144
 #define DATA_PIN 6
-#define FASTLED_ALLOW_INTERRUPTS 0
+
 
 CRGB leds[NUM_LEDS];
 CHSV ledsHSV[NUM_LEDS];
@@ -16,7 +17,7 @@ int modifier = 0;
 int pid = 1;
 int rainbowSolidHue = 0;
 int iHue = 0;
-long timing = 20;
+long timing = 5 0;
 int temp = 150;
 int spectrumValue[7];
 
