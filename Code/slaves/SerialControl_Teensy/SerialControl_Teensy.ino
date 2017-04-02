@@ -1,11 +1,18 @@
 #define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
 #include <Audio.h>
-#define NUM_LEDS 144
+#define NUM_LEDS 360
 #define DATA_PIN 6
+#define USE_OCTOWS2811
+#include<OctoWS2811.h>
+
+#define NUM_LEDS_PER_STRIP 360
+#define NUM_STRIPS 1
+
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
 
-CRGB leds[NUM_LEDS];
+
 CHSV ledsHSV[NUM_LEDS];
 
 int LM35Pin = A0;
@@ -17,7 +24,7 @@ int modifier = 0;
 int pid = 1;
 int rainbowSolidHue = 0;
 int iHue = 0;
-long timing = 5 0;
+long timing = 50;
 int temp = 150;
 int spectrumValue[7];
 
@@ -333,7 +340,8 @@ void loop() {
     } else if (deltaV < 0 && v == 0){
       deltaV = deltaV * -1;
     }
-  }       
+  }
+  delay(1000);       
 }
 
 void setUniform(int h, int s, int v){
