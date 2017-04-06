@@ -1,12 +1,12 @@
 #define FASTLED_ALLOW_INTERRUPTS 0
-#include <FastLED.h>
+
 #include <Audio.h>
-#define NUM_LEDS 360
-#define DATA_PIN 6
+#define NUM_LEDS 4
 #define USE_OCTOWS2811
 #include<OctoWS2811.h>
+#include <FastLED.h>
 
-#define NUM_LEDS_PER_STRIP 360
+#define NUM_LEDS_PER_STRIP 4
 #define NUM_STRIPS 1
 
 CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
@@ -85,7 +85,7 @@ void setup() {
   Serial.print("usb serial");
   Serial1.write(88);
 
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+  LEDS.addLeds<OCTOWS2811>(leds, NUM_LEDS_PER_STRIP);
   for(int x = 0; x < NUM_LEDS; x++){
           leds[x] = CHSV(255,0,255);
           FastLED.show();
